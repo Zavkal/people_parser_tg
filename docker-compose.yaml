@@ -1,0 +1,11 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: ./bot/Dockerfile
+    restart: always
+    container_name: people-parser-bot
+#    command: /bin/sh -c "while sleep 1000; do :; done"
+    command: python main.py
+    env_file:
+      - .env
