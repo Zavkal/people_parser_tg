@@ -1,6 +1,6 @@
 from aiogram import F, Router, types
 
-from keyboards.base_post_working_keyboard import base_post_working_kb
+from bot.keyboards.base_post_working_keyboard import base_post_working_kb
 
 router = Router(name="Начальная работа с постом")
 
