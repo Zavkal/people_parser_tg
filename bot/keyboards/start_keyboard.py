@@ -1,8 +1,12 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-start_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Начать", callback_data="start_working")],
-        [InlineKeyboardButton(text="Удалить", callback_data="close_window")],
-    ]
-)
+
+def start_kb(media_id: str):
+    start_kb_ = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Начать", callback_data=f"start_working:{media_id}")],
+            [InlineKeyboardButton(text="Удалить", callback_data="close_window")],
+        ]
+    )
+    return start_kb_
+
