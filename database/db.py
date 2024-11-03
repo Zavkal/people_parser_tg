@@ -44,7 +44,8 @@ async def start_db():
                 "file_id TEXT,"
                 "media_type TEXT,"
                 "format_file TEXT,"
-                "user_id TEXT,"
+                "chat_id TEXT,"
+                "flag INTEGER,"
                 "FOREIGN KEY(media_id) REFERENCES post_message(media_id))")
 
 
@@ -64,7 +65,8 @@ def add_post_media(
     file_id: str = None,
     media_type: str = None,
     format_file: str = None,
-    user_id: str = None
+    chat_id: str = None,
+    flag: int = 0
 ):
     # Сначала проверяем, существует ли запись с таким media_id
     cur.execute("SELECT COUNT(*) FROM post_media WHERE media_id = ?", (media_id,))
@@ -72,13 +74,13 @@ def add_post_media(
 
     if not exists:
         # Если записи нет, создаем новую
-        cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (media_id, message_id, content, file_id, media_type, format_file, user_id))
+        cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag))
         cur.execute("INSERT INTO post_message (media_id) VALUES (?)", (media_id,))
     else:
         # Если запись с media_id уже существует, добавляем новую запись
-        cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (media_id, message_id, content, file_id, media_type, format_file, user_id))
+        cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag))
 
     db.commit()
 
@@ -98,7 +100,8 @@ def get_post_media_by_media_id(media_id: str):
             "file_id": row[3],
             "media_type": row[4],
             "format_file": row[5],
-            "user_id": row[6]
+            "chat_id": row[6],
+            "flag": row[7]
         })
 
     return result
@@ -106,6 +109,11 @@ def get_post_media_by_media_id(media_id: str):
 
 def add_signature(title: str) -> None:
     cur.execute("INSERT INTO signatures (title) VALUES (?)", (title,))
+    db.commit()
+
+
+def update_signature(signature_id: int, new_title: str) -> None:
+    cur.execute("UPDATE signatures SET title = ? WHERE id = ?", (new_title, signature_id))
     db.commit()
 
 
@@ -156,5 +164,18 @@ def update_first_media_content(media_id: str, content: str) -> None:
         "UPDATE post_media SET content = ? WHERE media_id = ? AND rowid = (SELECT rowid FROM post_media WHERE media_id = ? ORDER BY rowid ASC LIMIT 1)",
         (content, media_id, media_id)
     )
+    db.commit()
+
+
+def update_flag_signature(media_id: str, flag: int) -> None:
+    cur.execute(
+        "UPDATE post_media SET flag = ? WHERE media_id = ? AND rowid = (SELECT rowid FROM post_media WHERE media_id = ? ORDER BY rowid ASC LIMIT 1)",
+        (flag, media_id, media_id)
+    )
+    db.commit()
+
+
+def delete_all_post_media(media_id: str) -> None:
+    cur.execute("DELETE FROM post_media WHERE media_id = ?", (media_id,))
     db.commit()
 
