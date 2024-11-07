@@ -43,3 +43,7 @@ async def autodel_create_mg_(message: types.Message, all_message: list, media_gr
         except:
             pass
         await message.answer(all_message[0]['content'])
+
+
+
+

@@ -43,7 +43,7 @@ async def change_post_handler(
         callback: types.CallbackQuery
 ) -> None:
     media_id = callback.data.split(":")[1]
-    await callback.message.edit_text(text="Изменить пост", reply_markup=change_post_kb(media_id=media_id))
+    await callback.message.edit_text(text="🔝ㅤ", reply_markup=change_post_kb(media_id=media_id))
 
 
 # ====================================DESCRIPTION====================================================
@@ -56,10 +56,10 @@ async def change_description_handler(callback: types.CallbackQuery) -> None:
         for signature in signatures:
             title = signature.get('title', None)
             if title:
+                title = re.sub('<.*?>', '', title)
                 button = InlineKeyboardButton(
                     text=title,
-                    callback_data=f"signature:{signature['id']}:{media_id}"
-                    # Уникальный callback_data для каждой кнопки
+                    callback_data=f"signature:{signature['id']}:{media_id}",
                 )
                 inline_keyboard.append([button])  # Каждая кнопка в отдельной строке
 
@@ -70,7 +70,7 @@ async def change_description_handler(callback: types.CallbackQuery) -> None:
     keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
 
     # Редактируем сообщение с новой клавиатурой
-    await callback.message.edit_text("Выберите подпись", reply_markup=keyboard)
+    await callback.message.edit_text("🔝ㅤ", reply_markup=keyboard, parse_mode="html")
 
 
 @router.callback_query(F.data.startswith("signature:"))
@@ -103,6 +103,7 @@ async def handle_signature_selection(callback: types.CallbackQuery) -> None:
         for signature in signatures:
             title = signature.get('title', None)
             if title:
+                title = re.sub('<.*?>', '', title)
                 button = InlineKeyboardButton(
                     text=title,
                     callback_data=f"signature:{signature['id']}:{media_id}"
@@ -127,6 +128,7 @@ async def add_description_handler(callback: types.CallbackQuery) -> None:
         for signature in signatures:
             title = signature.get('title', None)
             if title:
+                title = re.sub('<.*?>', '', title)
                 button = InlineKeyboardButton(
                     text=title,
                     callback_data=f"change_signature:{signature['id']}:{media_id}"
@@ -139,7 +141,7 @@ async def add_description_handler(callback: types.CallbackQuery) -> None:
 
     # Объединяем обе клавиатуры
     keyboard.inline_keyboard.extend(change_description_kb(media_id).inline_keyboard)
-    await callback.message.edit_text(text='Изменение подписи', reply_markup=keyboard)
+    await callback.message.edit_text(text='🔝ㅤ', reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("change_signature:"))
@@ -170,11 +172,10 @@ async def handle_new_signature(message: types.Message, state: FSMContext) -> Non
     data = await state.get_data()
     media_id = data.get('media_id')
     signature_id = data.get('signature_id')
-
     message_kb = data.get('message_kb')
     chat_id = data.get('chat_id')
 
-    new_description = message.text
+    new_description = message.html_text
     await message.delete()
     # Сохранение новой подписи в БД
     update_signature(signature_id, new_description)
@@ -221,6 +222,7 @@ async def handle_new_signature(message: types.Message, state: FSMContext) -> Non
         for signature in signatures:
             title = signature.get('title')  # Получаем заголовок подписи
             if title:  # Проверяем, что title не None или пустая строка
+                title = re.sub('<.*?>', '', title)
                 button = InlineKeyboardButton(
                     text=title,
                     callback_data=f"signature:{signature['id']}:{media_id}"
@@ -307,15 +309,21 @@ async def change_text_handler(callback: types.CallbackQuery) -> None:
     media_id = callback.data.split(":")[1]
     all_message = get_post_media_by_media_id(media_id)
     update_flag_signature(media_id, flag=all_message[0]['flag'] - 1)
-    new_message = all_message[0]['content'].split('\n')
-    if len(new_message) > 1:
-        update_first_media_content(media_id, "\n".join(new_message[:-2]))
-    else:
-        update_first_media_content(media_id, all_message[0]['content'])
     media_group, all_message = check_media_post(media_id)
     chat_id = all_message[0]['chat_id']
     caption = all_message[0]['content']
     message_id = all_message[0]['message_id']
+    signatures = get_all_signatures()
+    print(caption)
+    for sign in signatures:
+        if sign['title'] in caption:
+            caption = caption.replace(sign['title'], '')
+    caption = re.sub(r'\n+', '\n', caption)
+    caption = caption[:-1]
+
+    update_first_media_content(media_id, caption)
+
+
     if media_group:
         await callback.bot.edit_message_caption(chat_id=chat_id,
                                                 message_id=message_id,
@@ -325,12 +333,13 @@ async def change_text_handler(callback: types.CallbackQuery) -> None:
                                              message_id=message_id,
                                              text=caption)
 
-    signatures = get_all_signatures()  # Получаем все подписи
+
     inline_keyboard = []  # Создаем список для кнопок
     if signatures:
         for signature in signatures:
             title = signature.get('title', None)
             if title:
+                title = re.sub('<.*?>', '', title)
                 button = InlineKeyboardButton(
                     text=title,
                     callback_data=f"signature:{signature['id']}:{media_id}"
@@ -344,7 +353,7 @@ async def change_text_handler(callback: types.CallbackQuery) -> None:
     # Объединяем обе клавиатуры
     keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
 
-    await callback.message.edit_text(text="Вы удалили строку", reply_markup=keyboard)
+    await callback.message.edit_text(text="🔝ㅤ", reply_markup=keyboard)
 
 
 # ====================================MEDIA====================================================
@@ -356,7 +365,7 @@ async def change_media_handler(
     # Отправляем текстовое сообщение, если контент существует
 
     await callback.message.edit_text(
-        text="Выберите действие.",
+        text="🔝ㅤ",
         reply_markup=change_media_kb(media_id))
 
 
@@ -427,7 +436,7 @@ async def handle_media_input(message: types.Message, state: FSMContext) -> None:
             file_id, media_type, format_file = message_media_type(msg)
             add_post_media(media_id, message_id, content, file_id, media_type, format_file, chat_id)
 
-    await message.answer('Выберите действие', reply_markup=change_media_kb(media_id))
+    await message.answer('🔝ㅤ', reply_markup=change_media_kb(media_id))
     await state.clear()  # Выходим из состояния ожидания
 
 
@@ -498,7 +507,7 @@ async def handle_media_delete(callback: types.CallbackQuery, state: FSMContext) 
     number_media = int(callback.data.split(":")[1]) - 1
 
     media_id = callback.data.split(":")[-1]
-    await callback.answer("Отправьте новое фото")
+    await callback.answer("Отправьте новое медиа")
     await state.update_data(media_id=media_id, prompt_message_id=callback.message.message_id, number_media=number_media)
     await state.set_state(MediaState.waiting_for_media_change)
 
@@ -535,7 +544,7 @@ async def change_text_handler(callback: types.CallbackQuery) -> None:
     media_id = callback.data.split(":")[1]
 
     await callback.message.edit_text(
-        text="Выберите действие.",
+        text="🔝ㅤ",
         reply_markup=change_text_kb(media_id))
 
 
@@ -568,7 +577,7 @@ async def handle_text_input(message: types.Message, state: FSMContext) -> None:
         await message.bot.edit_message_text(chat_id=chat_id,
                                             message_id=message_id,
                                             text=caption)
-    await message.bot.edit_message_text('Выберите действие',
+    await message.bot.edit_message_text('🔝ㅤ',
                                         chat_id=chat_id,
                                         message_id=message_del_db,
                                         reply_markup=change_text_kb(media_id))

@@ -42,7 +42,7 @@ async def command_start_handler(message: types.Message, media_id: str) -> None:
     # Отправляем сообщение с началом работы
     await message.bot.send_message(
         chat_id=message.from_user.id,
-        text="Начало работы.",
+        text="🔝ㅤ",
         reply_markup=start_kb(media_id)
     )
 

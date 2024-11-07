@@ -33,7 +33,9 @@ async def start_db():
     # Добавил отдельную БД для хранения сообщения и времени
     cur.execute("CREATE TABLE IF NOT EXISTS post_message("
                 "media_id TEXT,"
-                "publ_time TEXT)")
+                "publ_time_tg TEXT,"
+                "publ_time_vk,"
+                "del_time TEXT)")
 
 
     # Добавил бд с путями до файлов с привязкой по post_id
@@ -49,11 +51,11 @@ async def start_db():
                 "FOREIGN KEY(media_id) REFERENCES post_message(media_id))")
 
 
-    # Добавил Состоянии кнопок для упрощения своей работы.
     cur.execute("CREATE TABLE IF NOT EXISTS button_states ("
-                "post_id TEXT,"
-                "button_tg_state TEXT DEFAULT 'off',"
-                "button_vk_state TEXT DEFAULT 'off')")
+                    "media_id TEXT,"
+                    "button_tg_state TEXT DEFAULT 'off',"
+                    "button_vk_state TEXT DEFAULT 'off')")
+
 
     db.commit()
 
@@ -76,7 +78,7 @@ def add_post_media(
         # Если записи нет, создаем новую
         cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag))
-        cur.execute("INSERT INTO post_message (media_id) VALUES (?)", (media_id,))
+
     else:
         # Если запись с media_id уже существует, добавляем новую запись
         cur.execute("INSERT INTO post_media (media_id, message_id, content, file_id, media_type, format_file, chat_id, flag) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -178,4 +180,83 @@ def update_flag_signature(media_id: str, flag: int) -> None:
 def delete_all_post_media(media_id: str) -> None:
     cur.execute("DELETE FROM post_media WHERE media_id = ?", (media_id,))
     db.commit()
+
+
+# Функция для добавления записи в колонку publ_time
+def add_publ_time_tg(media_id: str, publ_time_tg: str):
+    cur.execute("UPDATE post_message SET publ_time_tg = ? WHERE media_id = ?", (publ_time_tg, media_id))
+    db.commit()
+
+
+def add_publ_time_vk(media_id: str, publ_time_vk: str):
+    cur.execute("UPDATE post_message SET publ_time_vk = ? WHERE media_id = ?", (publ_time_vk, media_id))
+    db.commit()
+
+
+def get_all_publ_time(media_id: str):
+    cur.execute("SELECT publ_time_tg, publ_time_vk FROM post_message WHERE media_id = ?", (media_id,))
+    return cur.fetchone()
+
+
+# Функция для добавления записи в колонку del_time
+def add_del_time(media_id: str, del_time: str):
+    cur.execute("UPDATE post_message SET del_time = ? WHERE media_id = ?", (del_time, media_id))
+    db.commit()
+
+
+# Функция для добавления записей в обе колонки: publ_time и del_time
+def add_publ_and_del_time(media_id: str, publ_time: str, del_time: str):
+    cur.execute("UPDATE post_message SET publ_time = ?, del_time = ? WHERE media_id = ?", (publ_time, del_time, media_id))
+    db.commit()
+
+
+def get_all_channel_publish():
+    cur.execute("SELECT channel_username, channel_id FROM channel_publish")
+    result = []
+    for channel in cur.fetchall():
+        result.append({
+            'channel_username': channel[0],
+            'channel_id': channel[1]
+        })
+    return result
+
+
+def update_button_states(media_id: str,
+                         button_tg_state: str = None,
+                         button_vk_state: str = None):
+    query = "UPDATE button_states SET "
+    params = []
+
+    if button_tg_state is not None:
+        query += "button_tg_state = ?, "
+        params.append(button_tg_state)
+
+    if button_vk_state is not None:
+        query += "button_vk_state = ?, "
+        params.append(button_vk_state)
+
+    query = query.rstrip(", ") + " WHERE media_id = ?"
+    params.append(media_id)
+
+    cur.execute(query, params)
+    db.commit()
+
+
+def add_button_states(media_id: str):
+    cur.execute("""INSERT INTO button_states (media_id, button_tg_state, button_vk_state) VALUES (?, 'off', 'off')""", (media_id,))
+    db.commit()
+
+
+def add_message_post(media_id: str):
+    cur.execute("INSERT INTO post_message (media_id) VALUES (?)", (media_id,))
+
+    db.commit()
+
+
+# Функция для получения состояния кнопок
+def get_button_states(media_id: str):
+    return cur.execute(
+        "SELECT button_tg_state, button_vk_state FROM button_states WHERE media_id = ?",
+        (media_id,)
+    ).fetchone()
 

@@ -14,6 +14,7 @@ CHAT_ID = -1002324214689  # Укажите ID чата
 
 @router.message(F.chat.id == CHAT_ID)
 async def handle_media_group(message: types.Message, album: list = None):
+
     if album:
         for message in album:
             media_id = message.media_group_id
