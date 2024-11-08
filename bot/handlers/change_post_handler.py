@@ -96,6 +96,29 @@ async def handle_signature_selection(callback: types.CallbackQuery) -> None:
             await callback.bot.edit_message_text(message_id=first_message['message_id'],
                                                  text=first_message['content'],
                                                  chat_id=first_message['chat_id'])
+    signatures = get_all_signatures()
+    inline_keyboard = []
+    if signatures:
+        for signature in signatures:
+            title = signature.get('title', None)
+            if title:
+                title = re.sub('<.*?>', '', title)
+                button = InlineKeyboardButton(
+                    text=title,
+                    callback_data=f"signature:{signature['id']}:{media_id}"
+                    # Уникальный callback_data для каждой кнопки
+                )
+                inline_keyboard.append([button])  # Каждая кнопка в отдельной строке
+
+    # Создаем InlineKeyboardMarkup с указанием inline_keyboard
+    keyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+
+    # Объединяем обе клавиатуры
+    keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
+    if first_message['flag'] == 0:
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+    else:
+        await callback.answer("Подпись добавлена")
 
 
 @router.callback_query(F.data.startswith("settings_description:"))
@@ -312,6 +335,28 @@ async def del_text_signature_handler(callback: types.CallbackQuery) -> None:
         await callback.bot.edit_message_text(chat_id=chat_id,
                                              message_id=message_id,
                                              text=caption)
+
+
+    signatures = get_all_signatures()
+    inline_keyboard = []
+    if signatures:
+        for signature in signatures:
+            title = signature.get('title', None)
+            if title:
+                title = re.sub('<.*?>', '', title)
+                button = InlineKeyboardButton(
+                    text=title,
+                    callback_data=f"signature:{signature['id']}:{media_id}"
+                )
+                inline_keyboard.append([button])
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+    keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
+
+    if all_message[0]['flag'] == 0:
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+    else:
+        await callback.answer("Вы удалили подпись")
 
 
 # ====================================MEDIA====================================================
