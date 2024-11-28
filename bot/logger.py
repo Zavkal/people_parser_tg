@@ -4,7 +4,7 @@ from logging.handlers import TimedRotatingFileHandler
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 # Логирование в файл с ротацией каждый день
-file_handler = TimedRotatingFileHandler('bot.log', when='midnight', interval=1, backupCount=7)
+file_handler = TimedRotatingFileHandler('bot.log', when='midnight', interval=1, backupCount=7, encoding="utf-8")
 file_handler.setFormatter(formatter)
 file_handler.suffix = '%d-%m-%Y'
 

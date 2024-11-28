@@ -7,7 +7,7 @@ def base_post_working_kb(media_id: str):
             [InlineKeyboardButton(text="☑️ Отправить пост", callback_data=f"send_post:{media_id}")],
             [InlineKeyboardButton(text="📃 Подпись", callback_data=f"change_description:{media_id}")],
             [InlineKeyboardButton(text="✍️ Изменить", callback_data=f"change_post:{media_id}"),
-             InlineKeyboardButton(text="⏪ Назад", callback_data="start_handler")],
+             InlineKeyboardButton(text="⏪ Назад", callback_data=f"start_kb_middleware:{media_id}")],
         ]
     )
     return base_post_working_kb_

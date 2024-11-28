@@ -1,5 +1,6 @@
 import asyncio
 
+from bot.middleware.authorization import AuthorizationMiddleware
 from config import bot, dp
 from database.db import start_db
 from logger import logger
@@ -11,6 +12,10 @@ from handlers.pars_message_chat import router as pars_message_chat
 
 from handlers.send_to_tg_handler import router as send_to_tg_router
 from handlers.send_to_vk_handler import router as send_to_vk_router
+from handlers.admin import router as admin_panel
+from handlers.parser import router as parser
+from handlers.user_bot import router as user_bot
+from handlers.queue import router as queue
 
 
 async def main() -> None:
@@ -23,7 +28,13 @@ async def main() -> None:
         send_to_tg_router,
         send_to_vk_router,
         pars_message_chat,
+        admin_panel,
+        parser,
+        user_bot,
+        queue,
     )
+    dp.callback_query.middleware(AuthorizationMiddleware())
+    dp.message.middleware(AuthorizationMiddleware())
     await start_db()
     await dp.start_polling(bot, skip_updates=True)
 

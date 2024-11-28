@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import time
 from zoneinfo import ZoneInfo
 
 from aiogram import F, Router, types
@@ -19,6 +18,7 @@ async def send_to_tg_handler(callback: types.CallbackQuery) -> None:
     media_id = callback.data.split(':')[-1]
     update_button_states(media_id=media_id, button_tg_state='on')
     time_post = get_all_publ_time(media_id)[0]
+    await callback.message.edit_reply_markup(reply_markup=send_post_base_kb(media_id))
     if time_post:
         time_post = datetime.datetime.strptime(time_post, "%Y-%m-%d %H:%M:%S")
         time_now = datetime.datetime.now(msk_tz).replace(tzinfo=None)
@@ -26,8 +26,7 @@ async def send_to_tg_handler(callback: types.CallbackQuery) -> None:
         time_post = time_post.total_seconds()
         await state_time_publish_post(callback, media_id, time_post)
     else:
-        await state_time_publish_post(callback, media_id, time_sleep=0.2)
-    await callback.message.edit_reply_markup(reply_markup=send_post_base_kb(media_id))
+        await state_time_publish_post(callback, media_id, time_sleep=0.001)
 
 
 async def state_time_publish_post(callback: types.CallbackQuery, media_id: str, time_sleep: float):

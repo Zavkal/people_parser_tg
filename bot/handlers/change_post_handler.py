@@ -1,6 +1,4 @@
-import asyncio
 import re
-import time
 
 from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
@@ -12,16 +10,16 @@ from bot.keyboards.base_post_working_keyboard import base_post_working_kb
 from bot.keyboards.change_post_keyboard import (
     change_description_kb,
     change_media_kb,
-    change_post_kb, change_text_kb, back_button_change_post, back_to_change_description_kb, back_button_change_media,
+    change_post_kb, change_text_kb, back_to_change_description_kb, back_button_change_media,
     back_button_change_text, settings_description_kb, edit_signature_kb
 )
-from bot.middleware.autodel_create_message import autodel_create_mg, autodel_create_mg_
+
 from bot.middleware.check_media import check_media_post
 from bot.middleware.create_media_list import create_media_list
 from database.db import get_all_signatures, add_signature, delete_signature, get_signature_by_id, \
-    get_post_media_by_media_id, update_post_content, add_post_media, update_post_media_entry, \
+    get_post_media_by_media_id, add_post_media, update_post_media_entry, \
     delete_post_media_entry, update_file_id, update_first_media_content, delete_all_post_media, update_signature, \
-    update_flag_signature
+    update_flag_signature, add_button_states, delete_button_states, add_message_post, del_message_post
 
 router = Router(name="Изменение поста")
 
@@ -43,7 +41,8 @@ async def change_post_handler(
         callback: types.CallbackQuery
 ) -> None:
     media_id = callback.data.split(":")[1]
-    await callback.message.edit_text(text="🔝ㅤ", reply_markup=change_post_kb(media_id=media_id))
+    await callback.message.edit_text(text="ᅠ                               🔝                       ᅠ",
+                                     reply_markup=change_post_kb(media_id=media_id))
 
 
 # ====================================DESCRIPTION====================================================
@@ -70,7 +69,8 @@ async def change_description_handler(callback: types.CallbackQuery) -> None:
     keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
 
     # Редактируем сообщение с новой клавиатурой
-    await callback.message.edit_text("🔝ㅤ", reply_markup=keyboard, parse_mode="html")
+    await callback.message.edit_text("ᅠ                               🔝                       ᅠ", reply_markup=keyboard,
+                                     parse_mode="html")
 
 
 @router.callback_query(F.data.startswith("signature:"))
@@ -96,33 +96,13 @@ async def handle_signature_selection(callback: types.CallbackQuery) -> None:
             await callback.bot.edit_message_text(message_id=first_message['message_id'],
                                                  text=first_message['content'],
                                                  chat_id=first_message['chat_id'])
-    signatures = get_all_signatures()
-    inline_keyboard = []
-    if signatures:
-        for signature in signatures:
-            title = signature.get('title', None)
-            if title:
-                title = re.sub('<.*?>', '', title)
-                button = InlineKeyboardButton(
-                    text=title,
-                    callback_data=f"signature:{signature['id']}:{media_id}"
-                    # Уникальный callback_data для каждой кнопки
-                )
-                inline_keyboard.append([button])  # Каждая кнопка в отдельной строке
 
-    # Создаем InlineKeyboardMarkup с указанием inline_keyboard
-    keyboard = InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
-
-    # Объединяем обе клавиатуры
-    keyboard.inline_keyboard.extend(settings_description_kb(media_id).inline_keyboard)
-    if first_message['flag'] == 0:
-        await callback.message.edit_reply_markup(reply_markup=keyboard)
-    else:
-        await callback.answer("Подпись добавлена")
+    await callback.message.edit_reply_markup(reply_markup=base_post_working_kb(media_id))
 
 
 @router.callback_query(F.data.startswith("settings_description:"))
-async def add_description_handler(callback: types.CallbackQuery) -> None:
+async def add_description_handler(callback: types.CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
     media_id = callback.data.split(":")[1]
     signatures = get_all_signatures()  # Получаем все подписи
     inline_keyboard = []  # Создаем список для кнопок
@@ -143,7 +123,9 @@ async def add_description_handler(callback: types.CallbackQuery) -> None:
 
     # Объединяем обе клавиатуры
     keyboard.inline_keyboard.extend(change_description_kb(media_id).inline_keyboard)
-    await callback.message.edit_text(text='🔝ㅤ', reply_markup=keyboard)
+    await callback.message.edit_text(
+        text="ᅠ                            🔝                       ᅠ\nᅠ                 Настройки подписи",
+        reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("change_signature:"))
@@ -210,7 +192,7 @@ async def handle_new_signature(message: types.Message, state: FSMContext) -> Non
     data = await state.get_data()
     media_id = data.get('media_id')
     inline_message_id = data.get('inline_message_id')
-    new_description = message.text
+    new_description = message.html_text
     await message.delete()
     # Сохранение новой подписи в БД
     add_signature(new_description)
@@ -336,7 +318,6 @@ async def del_text_signature_handler(callback: types.CallbackQuery) -> None:
                                              message_id=message_id,
                                              text=caption)
 
-
     signatures = get_all_signatures()
     inline_keyboard = []
     if signatures:
@@ -361,14 +342,13 @@ async def del_text_signature_handler(callback: types.CallbackQuery) -> None:
 
 # ====================================MEDIA====================================================
 @router.callback_query(F.data.startswith("change_media:"))
-async def change_media_handler(
-        callback: types.CallbackQuery,
-) -> None:
+async def change_media_handler(callback: types.CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
     media_id = callback.data.split(":")[1]
     # Отправляем текстовое сообщение, если контент существует
 
     await callback.message.edit_text(
-        text="🔝ㅤ",
+        text="ᅠ                               🔝                       ᅠ",
         reply_markup=change_media_kb(media_id))
 
 
@@ -416,13 +396,14 @@ async def handle_media_input(message: types.Message, state: FSMContext) -> None:
                                      chat_id=message.chat.id)
     delete_all_post_media(media_id)
     for media in all_message:
-        prompt_message_id -= 1
         if media.get('file_id', None):
             try:
                 await message.bot.delete_message(message.chat.id, prompt_message_id)
             except:
                 pass
-
+        prompt_message_id -= 1
+    delete_button_states(media_id)
+    del_message_post(media_id)
     if media_group:
         sent_messages = await message.answer_media_group(media_group)
         for index, msg in enumerate(sent_messages):
@@ -435,11 +416,14 @@ async def handle_media_input(message: types.Message, state: FSMContext) -> None:
 
             # Добавляем content только для первого элемента
             content = msg.caption or msg.text or '' if index == 0 else ''
-
             file_id, media_type, format_file = message_media_type(msg)
             add_post_media(media_id, message_id, content, file_id, media_type, format_file, chat_id)
 
-    await message.answer('🔝ㅤ', reply_markup=change_media_kb(media_id))
+        add_button_states(media_id)
+        add_message_post(media_id)
+
+    await message.answer("ᅠ                               🔝                       ᅠ",
+                         reply_markup=change_media_kb(media_id))
     await state.clear()  # Выходим из состояния ожидания
 
 
@@ -477,10 +461,10 @@ async def handle_media_delete(callback: types.CallbackQuery) -> None:
         await callback.bot.delete_message(chat_id=chat_id, message_id=message_id_del)
         await callback.message.delete()
         new_media_id = await callback.bot.send_message(text=content,
-                                        chat_id=chat_id)
+                                                       chat_id=chat_id)
         new_media_id = str(new_media_id.message_id)
         add_post_media(media_id=new_media_id, content=content, chat_id=chat_id, flag=flag, message_id=new_media_id)
-        await callback.bot.send_message(text="🔝ㅤ",
+        await callback.bot.send_message(text="ᅠ                               🔝                       ᅠ",
                                         chat_id=chat_id,
                                         reply_markup=change_media_kb(new_media_id))
     else:
@@ -555,11 +539,12 @@ async def handle_media_input(message: types.Message, state: FSMContext) -> None:
 
 #  ====================================TEXT====================================================
 @router.callback_query(F.data.startswith("change_text:"))
-async def change_text_handler(callback: types.CallbackQuery) -> None:
+async def change_text_handler(callback: types.CallbackQuery, state: FSMContext) -> None:
+    await state.clear()
     media_id = callback.data.split(":")[1]
 
     await callback.message.edit_text(
-        text="🔝ㅤ",
+        text="ᅠ                               🔝                       ᅠ",
         reply_markup=change_text_kb(media_id))
 
 
@@ -577,7 +562,7 @@ async def handle_text_input(message: types.Message, state: FSMContext) -> None:
     user_data = await state.get_data()
     media_id = user_data["media_id"]
     message_del_db = user_data["message_del_db"]
-    update_first_media_content(media_id, content=message.text)
+    update_first_media_content(media_id, content=message.html_text)
     update_flag_signature(media_id, flag=0)
     media_group, all_message = check_media_post(media_id)
     chat_id = all_message[0]['chat_id']
@@ -592,7 +577,7 @@ async def handle_text_input(message: types.Message, state: FSMContext) -> None:
         await message.bot.edit_message_text(chat_id=chat_id,
                                             message_id=message_id,
                                             text=caption)
-    await message.bot.edit_message_text('🔝ㅤ',
+    await message.bot.edit_message_text("ᅠ                               🔝                       ᅠ",
                                         chat_id=chat_id,
                                         message_id=message_del_db,
                                         reply_markup=change_text_kb(media_id))
@@ -620,4 +605,3 @@ async def change_text_lower_row_handler(callback: types.CallbackQuery) -> None:
             await callback.bot.edit_message_text(chat_id=chat_id,
                                                  message_id=message_id,
                                                  text=caption)
-

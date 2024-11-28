@@ -74,8 +74,8 @@ def change_media_kb(media_id: str):
 def change_text_kb(media_id: str):
     change_text_kb_ = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="♻️ Заменить текст", callback_data=f"change_text_post:{media_id}"),
-             InlineKeyboardButton(text="⛔️ Удалить нижнюю строчку", callback_data=f"change_text_lower_row:{media_id}")],
+            [InlineKeyboardButton(text="♻️ Заменить текст", callback_data=f"change_text_post:{media_id}")],
+            [InlineKeyboardButton(text="⛔️ Удалить нижнюю строчку", callback_data=f"change_text_lower_row:{media_id}")],
             [InlineKeyboardButton(text="⏪ Назад", callback_data=f"change_post:{media_id}")]
         ]
     )
