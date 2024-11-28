@@ -42,7 +42,7 @@ async def send_to_vk_handler(callback: types.CallbackQuery, ) -> None:
     text_without_tags = re.sub(r'<(?!a\s|/a).*?>', '', text_message)
 
     # Преобразуем ссылки вида <a href="URL">Текст</a> в "URL Текст"
-    formatted_text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'\1 \2', text_without_tags)
+    formatted_text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'\2 \1', text_without_tags)
 
     if not time_post:
         post_to_wall(media_id, formatted_text)

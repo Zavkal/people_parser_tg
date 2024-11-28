@@ -23,7 +23,7 @@ async def get_media(callback: types.CallbackQuery, type_file: str, uniq_name: st
         file_info = await callback.bot.get_file(uniq_name)
         file_path = file_info.file_path
         os.makedirs(f'../img/{type_file}', exist_ok=True)
-        file_url = f"https://api.telegram.org/file/bot{callback.message.bot.token}/{file_path}"
+        file_url = f"http://127.0.0.1:8081/bot{callback.message.bot.token}/{file_path}"
         destination = f"../img/{type_file}/{uniq_name}{format_file}"
         await download_file(file_url, destination)
 
