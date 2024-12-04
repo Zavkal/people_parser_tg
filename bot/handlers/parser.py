@@ -1,4 +1,6 @@
 import asyncio
+import os
+
 from pyrogram import Client
 
 from aiogram.fsm.state import StatesGroup, State
@@ -9,7 +11,7 @@ from aiogram.types import FSInputFile
 from bot.keyboards.parser_kb import get_sources_for_del, get_started_kb
 from database.clients import clients
 from database.db import add_source, del_source, get_sources, get_parser_info, add_parser_info, delete_parser_info, \
-    get_all_parser_info, get_source, select_chat
+    get_all_parser_info, get_source, select_chat, delete_all_parser_info
 
 from bot.keyboards.admin_kb import settings_parser_kb, back_add_sources
 
@@ -17,7 +19,9 @@ from bot.middleware.parser_operations import get_all_sources, check_channel, get
 
 
 router = Router(name="Парсер")
-PHOTO_PARSER = FSInputFile(path="../img/sources.jpg")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+PHOTO_PARSER = FSInputFile(path=os.path.join(BASE_DIR, "img", "sources.jpg"))
 
 
 class AddSource(StatesGroup):
@@ -64,7 +68,7 @@ async def add_sources(message: types.Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "back_add_sources")
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def back_settings_parser(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     sources = get_all_sources()
@@ -81,7 +85,7 @@ async def add_sources_valid(callback_query: types.CallbackQuery):
 
 
 @router.callback_query(F.data == "del_source")
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def start_del_sources(callback_query: types.CallbackQuery):
     sources = get_all_sources()
     if sources:
@@ -92,7 +96,7 @@ async def start_del_sources(callback_query: types.CallbackQuery):
 
 
 @router.callback_query(F.data == "add_source")
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def add_sources_(callback_query: types.CallbackQuery, state: FSMContext):
     client = clients.get("client")
     if client:
@@ -105,11 +109,12 @@ async def add_sources_(callback_query: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("source_del_"))
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def del_sources(callback_query: types.CallbackQuery):
-    source_id = callback_query.data.split("source_del_")[-1]
+    source_id = callback_query.data.split("_")[-1]
+    source_title = callback_query.data.split("_")[-2]
     del_source(source_id)
-    delete_parser_info(source_id)
+    delete_parser_info(source_title)
     sources = get_sources()
     if sources:
         await callback_query.message.edit_caption(caption='Какой источник удалить?',
@@ -151,18 +156,17 @@ async def start_all_parsers(callback_query: types.CallbackQuery):
 @router.callback_query(F.data == "stop_all_parser")
 @flags.authorization(all_rights=True)
 async def stop_all_parsers(callback_query: types.CallbackQuery):
-    sources = get_sources()
     parsers = get_all_parser_info()
     if len(parsers) == 0:
         await callback_query.answer("Уже все остановлены")
     else:
-        stop_parsers(sources)
+        delete_all_parser_info()
         await callback_query.message.edit_caption(caption='Какой остановить?',
                                                   reply_markup=get_started_kb("stop"))
 
 
 @router.callback_query(F.data.startswith("start_source_"))
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def start_parser_for_id(callback_query: types.CallbackQuery):
     title = callback_query.data.split("start_source_")[-1]
     is_started = get_parser_info(title)
@@ -191,7 +195,7 @@ async def stop_parser(callback_query: types.CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("stop_source_"))
-@flags.authorization(rights_post=True)
+@flags.authorization(post_rights=True)
 async def stop_parser_for_id(callback_query: types.CallbackQuery):
     title = callback_query.data.split("stop_source_")[-1]
     is_started = get_parser_info(title)

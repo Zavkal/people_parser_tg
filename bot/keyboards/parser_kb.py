@@ -8,7 +8,7 @@ def get_sources_for_del():
     builder = InlineKeyboardBuilder()
     sources = get_sources()
     for _id, title in sources:
-        builder.row(InlineKeyboardButton(text=f"🚫 {title}", callback_data=f"source_del_{_id}"))
+        builder.row(InlineKeyboardButton(text=f"🚫 {title}", callback_data=f"source_del_{title}_{_id}"))
     builder.row(InlineKeyboardButton(text="⏪ Назад", callback_data=f"back_add_sources"))
     return builder.as_markup()
 

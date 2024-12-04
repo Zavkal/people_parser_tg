@@ -51,3 +51,18 @@ def kb_back_send_post(media_id: str):
         ]
     )
     return kb_back_send_post_
+
+
+def send_post_vk_error_kb(media_id: str, flag: bool = True):
+    send_post_vk_error_kb_ = InlineKeyboardMarkup(
+        inline_keyboard=[
+
+            [
+                InlineKeyboardButton(text="☑️ Отправить без большого файла", callback_data=f"send_to_vk:{media_id}:{flag}")
+            ],
+            [
+                InlineKeyboardButton(text="❌ Отменить", callback_data=f"send_to_vk_error_close:{media_id}")
+            ],
+        ]
+    )
+    return send_post_vk_error_kb_

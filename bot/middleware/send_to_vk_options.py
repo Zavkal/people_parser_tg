@@ -17,14 +17,17 @@ vk_token = os.getenv("VK_USER_TOKEN")
 vk_session = vk_api.VkApi(token=vk_token)
 vk = vk_session.get_api()
 
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
 
 async def get_media(callback: types.CallbackQuery, type_file: str, uniq_name: str, format_file: str):
     if uniq_name:
         file_info = await callback.bot.get_file(uniq_name)
         file_path = file_info.file_path
-        os.makedirs(f'../img/{type_file}', exist_ok=True)
-        file_url = f"http://127.0.0.1:8081/bot{callback.message.bot.token}/{file_path}"
-        destination = f"../img/{type_file}/{uniq_name}{format_file}"
+        media_dir = os.path.join(base_dir, 'img', type_file)
+        os.makedirs(media_dir, exist_ok=True)
+        file_url = f"https://api.telegram.org/file/bot{callback.message.bot.token}/{file_path}"
+        destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
         await download_file(file_url, destination)
 
 
@@ -37,13 +40,15 @@ async def download_file(file_url, destination):
 
 
 async def upload_to_wall_vk(media_id: str, msg: dict):
+    if msg['media_type']:
+        media_dir = os.path.join(base_dir, 'img', msg['media_type'])
     # 1. Получение URL сервера для загрузки изображений
     if msg['media_type'] == 'photos':
         upload_server = vk.photos.getWallUploadServer(group_id=227946323)
         upload_url = upload_server.get('upload_url')
 
-        # 2. Загрузка изображения на сервер
-        with open('../img/' + msg['media_type'] + '/' + msg['file_id'] + msg['format_file'], 'rb') as file:
+        file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
+        with open(file_path, 'rb') as file:
             response = requests.post(upload_url, files={'photo': file})
 
             try:
@@ -69,9 +74,9 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
             name=msg.get('message_id'),
             description=msg.get('file_id')
         )['upload_url']
-        print(upload_url)
 
-        with open('../img/' + msg['media_type'] + '/' + msg['file_id'] + msg['format_file'], 'rb') as file:
+        file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
+        with open(file_path, 'rb') as file:
             response = requests.post(upload_url, files={'video_file': file}).json()
 
         video = response.get('video_id')
@@ -82,13 +87,12 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
         upload_server = vk.docs.getWallUploadServer(group_id=227946323)
         upload_url = upload_server['upload_url']
 
-        old_file_path = '../img/' + msg['media_type'] + '/' + msg['file_id'] + msg['format_file']
+        old_file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
         new_file_path = old_file_path.replace('.mp4', '.gif')
         mp4_to_gif(old_file_path, new_file_path)
         with open(new_file_path, 'rb') as file:
             response = requests.post(upload_url, files={'file': file}).json()
 
-        print(response)
         # Сохраняем документ
         file_id = response['file']
 
@@ -130,5 +134,6 @@ def post_to_wall(media_id: str, message: str, publish_time: int = None):
 
 async def del_media_in_folder(type_file: str, uniq_name: str, format_file: str):
     if uniq_name:
-        destination = f"../img/{type_file}/{uniq_name}{format_file}"
+        media_dir = os.path.join(base_dir, 'img', type_file)
+        destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
         os.remove(destination)

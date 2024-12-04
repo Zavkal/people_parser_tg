@@ -1,11 +1,15 @@
+version: '3.8'
+
 services:
   bot:
     build:
       context: .
-      dockerfile: ./bot/Dockerfile
-    restart: always
-    container_name: people-parser-bot
-#    command: /bin/sh -c "while sleep 1000; do :; done"
-    command: python main.py
+      dockerfile: Dockerfile
+    container_name: people_parser_tg_bot
     env_file:
       - .env
+    volumes:
+      - ./bot/sessions:/app/bot/sessions
+      - ./img:/app/img
+      - ./database:/app/database
+    restart: unless-stopped

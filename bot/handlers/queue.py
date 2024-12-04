@@ -1,3 +1,4 @@
+import os
 from zoneinfo import ZoneInfo
 
 from aiogram import Router, types, flags, F
@@ -8,8 +9,12 @@ from bot.middleware.check_media import check_media_post
 from database.db import get_all_post_message, get_button_states
 
 router = Router(name="Получение очереди")
-PHOTO_QUEUE_TG = FSInputFile(path="../img/tg_photo.jpg")
-PHOTO_QUEUE_VK = FSInputFile(path="../img/vk_photo.jpg")
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+PHOTO_QUEUE_TG = FSInputFile(path=os.path.join(BASE_DIR, "img", "tg_photo.jpg"))
+PHOTO_QUEUE_VK = FSInputFile(path=os.path.join(BASE_DIR, "img", "vk_photo.jpg"))
+
 msk_tz = ZoneInfo("Europe/Moscow")
 
 

@@ -15,7 +15,9 @@ from bot.keyboards.admin_kb import back_settings_user, start_admin_panel_kb, set
 from bot.middleware.parser_operations import stop_parsers, delete_session
 
 router = Router(name="Юзербот")
-PHOTO_USER = FSInputFile(path="../img/user_data.jpg")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+PHOTO_USER = FSInputFile(path=os.path.join(BASE_DIR, "img", "user_data.jpg"))
 
 
 class AddUserData(StatesGroup):
@@ -161,13 +163,23 @@ async def set_phone_code_valid(callback_query: types.CallbackQuery):
 @router.callback_query(F.data == "restart_client")
 @flags.authorization(all_rights=True)
 async def restart_client_user(callback_query: types.CallbackQuery):
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    session_dir = os.path.join(BASE_DIR, "sessions")
+
+    # Убедимся, что папка для сессий существует
+    if not os.path.exists(session_dir):
+        os.makedirs(session_dir)
+
     client = clients.get("client")
     user = select_user()
     active_parsers = get_all_parser_info()
+
     if user:
-        session_file = os.path.join("sessions", str(user[0]))
+        session_file = os.path.join(session_dir, f"{user[0]}")
+        session_journal_file = os.path.join(session_dir, f"{user[0]}.session-journal")
+
         if not active_parsers:
-            if os.path.exists(f"sessions/{user[0]}.session-journal"):
+            if os.path.exists(session_journal_file):
                 try:
                     await client.stop()
                     await client.start()
@@ -187,7 +199,8 @@ async def restart_client_user(callback_query: types.CallbackQuery):
                     await asyncio.sleep(5)
                     await callback_query.bot.delete_message(chat_id=mess_del.chat.id,
                                                             message_id=mess_del.message_id)
-                    os.remove(f'sessions/{user[0]}.session')
+                    if os.path.exists(session_file):
+                        os.remove(session_file)
                     delete_all_users_bot()
                     await callback_query.answer(text="Данные юзербота и файлы удалены.")
                     return
@@ -201,10 +214,15 @@ async def restart_client_user(callback_query: types.CallbackQuery):
 
 @router.callback_query(F.data == "go_in_userbot_kb")
 async def send_userbot_settings(callback: CallbackQuery):
-    await callback.message.edit_caption(
-        caption="️<b> Админ панель </b>🅰️",
-        reply_markup=settings_user_already()
-    )
+    data = select_user()
+    if not data:
+        await callback.message.edit_caption(caption="Данные отсутствуют",
+                                            reply_markup=settings_user_already())
+    else:
+        await callback.message.edit_caption(caption=f"Телефон: {data[2]}\n"
+                                                    f"API_ID: {data[0]}\n"
+                                                    f"API_HASH: {data[1]}\n",
+                                            reply_markup=settings_user_already())
 
 
 @router.callback_query(F.data == "data_userbot")

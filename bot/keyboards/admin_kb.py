@@ -293,9 +293,6 @@ def settings_user_already():
         inline_keyboard=
         [
             [
-                InlineKeyboardButton(text="📝 Показать данные", callback_data="data_userbot"),
-            ],
-            [
                 InlineKeyboardButton(text="📝 Изменить данные", callback_data="settings_data"),
             ],
             [

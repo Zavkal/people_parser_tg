@@ -1,7 +1,15 @@
+import os
 import sqlite3 as sq
-db = sq.connect("../database/db_bot.db")
-cur = db.cursor()
 from datetime import datetime, timedelta
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+relative_path = "db_bot.db"
+
+db_path = os.path.join(base_dir, relative_path)
+
+db = sq.connect(db_path)
+cur = db.cursor()
 
 
 async def start_db():
@@ -500,6 +508,12 @@ def get_all_parser_info():
 def delete_parser_info(channel):
     cur.execute("DELETE FROM parser_info WHERE channel = '{}'".format(channel))
     db.commit()
+
+
+def delete_all_parser_info():
+    cur.execute("DELETE FROM parser_info")  # Удаляет все записи из таблицы
+    db.commit()
+
 
 
 def add_post_info(mess_id, source_id):

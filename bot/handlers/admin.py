@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from aiogram.fsm.state import StatesGroup, State
 from aiogram import Router, F, types, flags
@@ -18,7 +19,10 @@ from bot.keyboards.admin_kb import admin_panel_kb, admin_panel_edit_users_kb, ad
 from bot.middleware.admin_operations import _get_users_with_rights, delete_user, get_chat, get_channels
 
 router = Router(name="Админ панель")
-PHOTO_ADMIN_PANEL = FSInputFile(path="../img/admin_panel.jpg")
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+PHOTO_ADMIN_PANEL = FSInputFile(path=os.path.join(BASE_DIR, "img", "admin_panel.jpg"))
 
 
 class AddUser(StatesGroup):
