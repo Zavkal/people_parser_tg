@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import requests
@@ -6,9 +7,15 @@ import imageio
 
 from aiogram import types
 from aiogram.client.session import aiohttp
-from dotenv import load_dotenv
+from aiogram.exceptions import TelegramBadRequest
 
+
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+
+from bot.keyboards.send_post_keyboard import send_post_vk_error_kb
 from database.db import add_media_post_vk, get_all_post_media_vk, select_groups_vk
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -19,16 +26,49 @@ vk = vk_session.get_api()
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
+load_dotenv()
+SESSION_USER_ID = os.getenv("SESSION_USER_ID")
+STRING_SESSION = os.getenv("STRING_SESSION")
 
-async def get_media(callback: types.CallbackQuery, type_file: str, uniq_name: str, format_file: str):
+
+async def get_media(callback: types.CallbackQuery, type_file: str, uniq_name: str, format_file: str, media_id: str):
     if uniq_name:
-        file_info = await callback.bot.get_file(uniq_name)
-        file_path = file_info.file_path
-        media_dir = os.path.join(base_dir, 'img', type_file)
-        os.makedirs(media_dir, exist_ok=True)
-        file_url = f"https://api.telegram.org/file/bot{callback.message.bot.token}/{file_path}"
-        destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
-        await download_file(file_url, destination)
+        try:
+            file_info = await callback.bot.get_file(uniq_name)
+            file_path = file_info.file_path
+            media_dir = os.path.join(base_dir, 'img', type_file)
+            os.makedirs(media_dir, exist_ok=True)
+            file_url = f"https://api.telegram.org/file/bot{callback.message.bot.token}/{file_path}"
+            destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
+            await download_file(file_url, destination)
+        except TelegramBadRequest as e:
+            try:
+                if "file is too big" in str(e):
+                    media_dir = os.path.join(base_dir, 'img', type_file)
+                    destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
+                    await callback.bot.send_video(chat_id=int(SESSION_USER_ID),
+                                                  video=uniq_name,
+                                                  caption=f"{media_id},{uniq_name}")
+
+                    await download_big_file(media_id, destination, STRING_SESSION)
+            except Exception as e:
+                mess_del = await callback.bot.send_message(
+                    text=f"🛑СЕССИЯ МЕРТВА🛑",
+                    chat_id=callback.message.chat.id)
+                await asyncio.sleep(4)
+                await callback.bot.delete_message(chat_id=mess_del.chat.id,
+                                                  message_id=mess_del.message_id)
+                await callback.message.edit_reply_markup(reply_markup=send_post_vk_error_kb(media_id, flag=False))
+
+        except Exception as e:
+            mess_del = await callback.bot.send_message(
+                text=f"🛑Не смог скачать 1 файл. Ошибка: {e}🛑",
+                chat_id=callback.message.chat.id)
+            await asyncio.sleep(4)
+            await callback.bot.delete_message(chat_id=mess_del.chat.id,
+                                              message_id=mess_del.message_id)
+            await callback.message.edit_reply_markup(reply_markup=send_post_vk_error_kb(media_id, flag=False))
+            return
 
 
 async def download_file(file_url, destination):
@@ -137,3 +177,31 @@ async def del_media_in_folder(type_file: str, uniq_name: str, format_file: str):
         media_dir = os.path.join(base_dir, 'img', type_file)
         destination = os.path.join(media_dir, f"{uniq_name}{format_file}")
         os.remove(destination)
+
+
+async def download_big_file(media_id: str, destination: str, STRING_SESSION: str):
+    json_data = {
+        "app_id": 2040,
+        "app_hash": "b18441a1ff607e10a989891a5462e627",
+        "sdk": "Windows 10",
+        "app_version": "5.1.7 x64",
+        "device": "Desktop",
+        "system_lang_pack": "en-US",
+        "lang_pack": "tdesktop", }
+
+    client = TelegramClient(StringSession(STRING_SESSION),
+                            api_id=json_data['app_id'],
+                            api_hash=json_data['app_hash'],
+                            app_version=json_data['app_version'],
+                            device_model=json_data['device'],
+                            system_lang_code=json_data["system_lang_pack"])
+
+    await client.connect()
+    if not await client.is_user_authorized():
+        raise Exception
+    else:
+        # await client.send_message("@sdfsdfsfdfdsd_test_temp_bot", message="/start")
+        messages = await client.get_messages("@x_pars_news_bot", limit=10)
+        for msg in messages:
+            if media_id in msg.text:
+                await client.download_media(msg, file=destination)

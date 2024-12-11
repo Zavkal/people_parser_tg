@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from bot.keyboards.send_post_keyboard import send_post_base_kb, send_post_kb, kb_back_send_post
-from database.db import get_button_states, add_publ_time_tg, add_publ_time_vk, get_all_publ_time
+from database.db import get_button_states, add_publ_time_tg, add_publ_time_vk, get_all_publ_time, get_one_post_message
 
 router = Router(name="Отправка поста")
 
@@ -23,9 +23,26 @@ class DateStates(StatesGroup):
 @router.callback_query(F.data.startswith("send_post:"))
 async def send_post_handler(callback: types.CallbackQuery, state: FSMContext) -> None:
     await state.clear()
+
     media_id = callback.data.split(":")[-1]
+
+    text_msg = "ᅠ                               🔝                       ᅠ"
+    states = get_button_states(media_id)
+    if states[0] == 'on':
+        time_tg = get_one_post_message(media_id)[1]
+        if time_tg:
+            text_msg = text_msg +f"\n💎 {time_tg}"
+        else:
+            text_msg = text_msg +f"\n💎 Был отправлен сразу."
+    if states[1] == 'on':
+        time_vk = get_one_post_message(media_id)[2]
+        if time_vk:
+            text_msg = text_msg + f"\n➡️ {time_vk}"
+        else:
+            text_msg = text_msg + f"\n➡️ Был отправлен сразу."
+
     await callback.message.edit_text(
-        text="ᅠ                               🔝                       ᅠ",
+        text=text_msg,
         reply_markup=send_post_kb(media_id)
     )
 
@@ -78,6 +95,7 @@ async def handle_new_signature(message: types.Message, state: FSMContext) -> Non
     data = await state.get_data()
     media_id = data['media_id']
     message_del_db = data['message_del_db']
+    await asyncio.sleep(3)
     await message.delete()
     if len(message.text) < 15:
         date_post = '20' + message.text[:2] + '-' + message.text[3:5] + '-' + message.text[6:8] + ' ' + message.text[
@@ -110,6 +128,7 @@ async def handle_new_signature(message: types.Message, state: FSMContext) -> Non
     data = await state.get_data()
     media_id = data.get('media_id')
     message_del_db = data.get('message_del_db')
+    await asyncio.sleep(3)
     await message.delete()
     publ_date = get_all_publ_time(media_id)
     states = get_button_states(media_id)

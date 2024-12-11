@@ -17,14 +17,13 @@ async def base_post_working_handler(callback: types.CallbackQuery, state: FSMCon
     media_id = callback.data.split(":")[1]
     all_message = get_post_media_by_media_id(media_id)
     who_worked = select_who_worked(mess_id=all_message[0]["mess_first_id"])
-
-    if not who_worked or who_worked[0]:
+    if not who_worked:
         await callback.message.edit_text("ᅠ                               🔝                       ᅠ",
                                          reply_markup=base_post_working_kb(media_id=media_id))
         add_who_worked(user_id=all_message[0]['chat_id'],
                        caption=all_message[0]['content'],
                        mess_id=all_message[0]['mess_first_id'])
-    elif str(callback.message.from_user.id):
+    elif str(callback.message.chat.id) == str(who_worked[0]):
         await callback.message.edit_text("ᅠ                               🔝                       ᅠ",
                                          reply_markup=base_post_working_kb(media_id=media_id))
     else:

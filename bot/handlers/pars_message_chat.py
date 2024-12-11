@@ -39,6 +39,7 @@ if data_middleware:
             media_id = message.message_id
             file_id, media_type, format_file = message_media_type(message)
             content = message.html_text
+            print(content)
             if len(content) > 1 and samples:
                 for sample in samples:
                     sample = sample[1]
