@@ -11,7 +11,6 @@ from bot.middleware.send_to_vk_options import get_media, upload_to_wall_vk, post
 from database.db import update_button_states, get_post_media_by_media_id, get_all_publ_time
 
 
-
 router = Router(name="Отправка поста в ВК")
 msk_tz = ZoneInfo("Europe/Moscow")
 

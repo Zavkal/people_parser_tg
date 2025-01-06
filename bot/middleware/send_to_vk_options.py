@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 
 import requests
 import vk_api
@@ -14,13 +15,13 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from bot.keyboards.send_post_keyboard import send_post_vk_error_kb
-from database.db import add_media_post_vk, get_all_post_media_vk, select_groups_vk
+from database.db import add_media_post_vk, get_all_post_media_vk, select_groups_vk, get_one_post_message, \
+    get_post_media_by_media_id
 from dotenv import load_dotenv
 
 load_dotenv()
 
 vk_token = os.getenv("VK_USER_TOKEN")
-# Создание сессии API ВКонтакте с использованием токена группы
 vk_session = vk_api.VkApi(token=vk_token)
 vk = vk_session.get_api()
 
@@ -29,6 +30,7 @@ base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 load_dotenv()
 SESSION_USER_ID = os.getenv("SESSION_USER_ID")
 STRING_SESSION = os.getenv("STRING_SESSION")
+GROUP_VK_ID = int(os.getenv("GROUP_VK_ID"))
 
 
 async def get_media(callback: types.CallbackQuery, type_file: str, uniq_name: str, format_file: str, media_id: str):
@@ -84,7 +86,7 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
         media_dir = os.path.join(base_dir, 'img', msg['media_type'])
     # 1. Получение URL сервера для загрузки изображений
     if msg['media_type'] == 'photos':
-        upload_server = vk.photos.getWallUploadServer(group_id=227946323)
+        upload_server = vk.photos.getWallUploadServer(group_id=GROUP_VK_ID)
         upload_url = upload_server.get('upload_url')
 
         file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
@@ -100,7 +102,7 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
 
         # 3. Сохранение изображения в альбом группы
         saved = vk.photos.saveWallPhoto(
-            group_id=227946323,
+            group_id=GROUP_VK_ID,
             photo=response_json['photo'],
             server=response_json['server'],
             hash=response_json['hash']
@@ -109,10 +111,16 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
         add_media_post_vk(media_id, f"photo{saved['owner_id']}_{saved['id']}")
 
     elif msg["media_type"] == 'videos':
+        all_post_msg = get_post_media_by_media_id(media_id)
+        text_message = all_post_msg[0]["content"]
+        text_without_tags = re.sub(r'<(?!a\s|/a).*?>', '', text_message)
+
+        # Преобразуем ссылки вида <a href="URL">Текст</a> в "URL Текст"
+        formatted_text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'\2 - \1', text_without_tags)
         upload_url = vk.video.save(
-            group_id=227946323,
-            name=msg.get('message_id'),
-            description=msg.get('file_id')
+            group_id=GROUP_VK_ID,
+            name="💎 XboxRent",
+            description=formatted_text
         )['upload_url']
 
         file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
@@ -124,7 +132,7 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
         add_media_post_vk(media_id, f"video{owner_id}_{video}")
 
     elif msg['media_type'] == 'documents' and msg['format_file'] == '.mp4':
-        upload_server = vk.docs.getWallUploadServer(group_id=227946323)
+        upload_server = vk.docs.getWallUploadServer(group_id=GROUP_VK_ID)
         upload_url = upload_server['upload_url']
 
         old_file_path = os.path.join(media_dir, f"{msg['file_id']}{msg['format_file']}")
