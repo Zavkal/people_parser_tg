@@ -97,7 +97,6 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
                 response_json = response.json()
             except Exception as e:
                 print("Ошибка при разборе JSON:", e)
-                print(response.content)
                 return None
 
         # 3. Сохранение изображения в альбом группы
@@ -208,7 +207,7 @@ async def download_big_file(media_id: str, destination: str, STRING_SESSION: str
     if not await client.is_user_authorized():
         raise Exception
     else:
-        # await client.send_message("@sdfsdfsfdfdsd_test_temp_bot", message="/start")
+        # await client.send_message("@sdfsdfsfdfdsd_test_temp_bot", message="/start") $@x_pars_news_bot
         messages = await client.get_messages("@x_pars_news_bot", limit=10)
         for msg in messages:
             if media_id in msg.text:
