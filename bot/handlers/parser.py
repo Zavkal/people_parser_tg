@@ -15,7 +15,7 @@ from database.db import add_source, del_source, get_sources, get_parser_info, ad
 
 from bot.keyboards.admin_kb import settings_parser_kb, back_add_sources
 
-from bot.middleware.parser_operations import get_all_sources, check_channel, get_sources_ids, parser, stop_parsers
+from bot.middleware.parser_operations import get_all_sources, check_channel, get_sources_ids
 
 
 router = Router(name="Парсер")
@@ -150,7 +150,6 @@ async def start_all_parsers(callback_query: types.CallbackQuery):
                 add_parser_info(title)
         await callback_query.message.edit_caption(caption='Какой запустить?',
                                                   reply_markup=get_started_kb("start"))
-        await parser()
 
 
 @router.callback_query(F.data == "stop_all_parser")
@@ -179,7 +178,6 @@ async def start_parser_for_id(callback_query: types.CallbackQuery):
         if ids and client:
             await callback_query.message.edit_caption(caption='Какой запустить?',
                                                       reply_markup=get_started_kb("start"))
-            await parser()
     elif is_started:
         await callback_query.answer(text="Уже запущен")
 

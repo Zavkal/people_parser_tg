@@ -299,6 +299,12 @@ def settings_user_already():
                 InlineKeyboardButton(text="🔁 Перезапустить клиент", callback_data="restart_client"),
             ],
             [
+                InlineKeyboardButton(text="Мягкая остановка", callback_data="soft_stop"),
+            ],
+            [
+                InlineKeyboardButton(text="Мягкий старт", callback_data="soft_start"),
+            ],
+            [
                 InlineKeyboardButton(text="⏪ Назад", callback_data="back_admin_panel"),
             ]
         ]

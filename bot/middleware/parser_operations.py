@@ -1,5 +1,7 @@
 import asyncio
 import os
+from collections import deque
+from collections.abc import Coroutine
 
 from aiogram.utils.markdown import hlink
 from pyrogram import Client
@@ -52,27 +54,59 @@ def get_source_status(title):
 
 
 async def parser():
-    processed_media_groups = set()
+    processed_messages = deque(maxlen=40)
     client: Client = clients.get("client")
     chat_id, username = select_chat()
-    while get_all_parser_info():
+    while True:
         ids = get_all_parser_info()
-        for source_id in ids:
-            source_id = source_id[0]
-            last_post = client.get_chat_history(source_id, limit=1)
-            async for mess in last_post:
-                if not get_mess_id(mess_id=mess.id, source_id=source_id):
-                    try:
-                        if mess.media_group_id:
-                            if mess.media_group_id in processed_media_groups:
-                                continue  # Пропускаем уже обработанную медиа-группу
-                            processed_media_groups.add(mess.media_group_id)
-                            await client.copy_media_group(username, source_id, mess.id)
-                        else:
-                            await client.copy_message(username, source_id, mess.id)
-
-                        add_post_info(mess_id=mess.id, source_id=source_id)
-                    except Exception as ex:
-                        logger.error(f"Ошибка в парсере: {ex}")
-
+        if not ids:
             await asyncio.sleep(10)
+            continue
+        else:
+            for source_id in ids:
+                source_id = source_id[0]
+                last_post = client.get_chat_history(source_id, limit=1)
+                async for mess in last_post:
+                    if not get_mess_id(mess_id=mess.id, source_id=source_id):
+                        try:
+                            if mess.media_group_id:
+                                if mess.id in processed_messages:
+                                    continue
+                                processed_messages.append(mess.id)
+                                await client.forward_messages( # copy_media_group если не сработает
+                                    chat_id=username,
+                                    from_chat_id=source_id,
+                                    message_ids=mess.id,
+                                )
+                            else:
+                                if mess.id in processed_messages:
+                                    continue
+                                await client.forward_messages(
+                                    chat_id=username,
+                                    from_chat_id=source_id,
+                                    message_ids=mess.id,
+                                )
+
+                            add_post_info(mess_id=mess.id, source_id=source_id)
+                        except Exception as ex:
+                            logger.error(f"Ошибка в парсере: {ex}")
+
+                await asyncio.sleep(10)
+
+
+class TaskManager:
+    _tasks = {}
+    PARSER_NAME = "parser_userbot"
+
+    @classmethod
+    def start(cls) -> None:
+        task = cls._tasks.get(cls.PARSER_NAME)
+        if task and not task.done():
+            return
+        cls._tasks[cls.PARSER_NAME] = asyncio.create_task(parser())
+
+    @classmethod
+    def stop(cls) -> None:
+        task = cls._tasks.get(cls.PARSER_NAME)
+        if task and not task.done():
+            task.cancel()

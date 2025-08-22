@@ -15,8 +15,6 @@ except Exception as e:
     CHAT_ID = None
     print(f"Ошибка при загрузке чата: {e}")
 
-# Хранилище обработанных сообщений
-processed_messages = set()
 
 if CHAT_ID:
     @router.message(F.chat.id == CHAT_ID)
@@ -25,10 +23,6 @@ if CHAT_ID:
 
         if album:
             media_id = album[0].media_group_id
-            if media_id in processed_messages:
-                return  # Уже обработано
-
-            processed_messages.add(media_id)
             for msg in album:
                 content = msg.html_text or ""
                 if samples:
@@ -38,14 +32,17 @@ if CHAT_ID:
                             content = content.replace(sample, '')
                 content = content.replace('  ', ' ').strip()
                 file_id, media_type, format_file = message_media_type(msg)
-                add_post_media(media_id, msg.message_id, content, file_id, media_type, format_file)
+                add_post_media(
+                    media_id=media_id,
+                    message_id=msg.message_id,
+                    content=content,
+                    file_id=file_id,
+                    media_type=media_type,
+                    format_file=format_file,
+                )
 
             await start_bot_edit_post(message, media_id)
         else:
-            if message.message_id in processed_messages:
-                return  # Уже обработано
-
-            processed_messages.add(message.message_id)
             content = message.html_text or ""
             if samples:
                 for sample in samples:
@@ -54,5 +51,12 @@ if CHAT_ID:
                         content = content.replace(sample, '')
             content = content.replace('  ', ' ').strip()
             file_id, media_type, format_file = message_media_type(message)
-            add_post_media(message.message_id, message.message_id, content, file_id, media_type, format_file)
+            add_post_media(
+                media_id=message.message_id,
+                message_id=message.message_id,
+                content=content,
+                file_id=file_id,
+                media_type=media_type,
+                format_file=format_file,
+            )
             await start_bot_edit_post(message, message.message_id)

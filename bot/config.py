@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 load_dotenv()
-ADMIN = "585028070"  # 763197387 585028070 1637636761
+ADMIN = "1637636761"  # 763197387 585028070 1637636761
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 

@@ -14,7 +14,7 @@ from bot.handlers.pars_message_chat import router as pars_message_chat
 from bot.handlers.send_to_tg_handler import router as send_to_tg_router
 from bot.handlers.send_to_vk_handler import router as send_to_vk_router
 from bot.handlers.admin import router as admin_panel
-from bot.handlers.parser import router as parser
+from bot.handlers.parser import router as parser_router
 from bot.handlers.user_bot import router as user_bot
 from bot.handlers.queue import router as queue
 
@@ -35,7 +35,7 @@ async def main() -> None:
         send_to_vk_router,
         pars_message_chat,
         admin_panel,
-        parser,
+        parser_router,
         user_bot,
         queue,
     )
