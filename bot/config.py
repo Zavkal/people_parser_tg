@@ -1,3 +1,4 @@
+import logging
 import os
 
 from aiogram import Bot, Dispatcher
@@ -17,3 +18,5 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
 
 
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+
+logging.basicConfig(level=logging.INFO)
