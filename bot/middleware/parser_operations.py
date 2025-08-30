@@ -73,11 +73,18 @@ async def parser():
                                 if mess.id in processed_messages:
                                     continue
                                 processed_messages.append(mess.id)
-                                await client.forward_messages( # copy_media_group если не сработает
-                                    chat_id=username,
-                                    from_chat_id=source_id,
-                                    message_ids=mess.id,
-                                )
+                                try:
+                                    await client.forward_messages(
+                                        chat_id=username,
+                                        from_chat_id=source_id,
+                                        message_ids=mess.id,
+                                    )
+                                except Exception:
+                                    await client.copy_media_group(
+                                        chat_id=username,
+                                        from_chat_id=source_id,
+                                        message_id=mess.id,
+                                    )
                             else:
                                 if mess.id in processed_messages:
                                     continue
@@ -91,7 +98,7 @@ async def parser():
                         except Exception as ex:
                             logging.error(f"Ошибка в парсере: {ex}")
 
-                await asyncio.sleep(10)
+            await asyncio.sleep(60)
 
 
 class TaskManager:
