@@ -39,8 +39,8 @@ async def start_bot_edit_post(message: types.Message, media_id: str) -> None:
     if media_group:
         for user in users:
             counter = 1
-            if search_and_replace(content=mess_text_for_auto_pars, replace=True):
-                content = all_message[0]['content']
+            if search_and_replace(content=mess_text_for_auto_pars):
+                content = search_and_replace(content=all_message[0]['content'], replace=True)
             else:
                 content = all_message[0]['content']
 
@@ -74,8 +74,8 @@ async def start_bot_edit_post(message: types.Message, media_id: str) -> None:
 
     else:
         for user in users:
-            if search_and_replace(content=mess_text_for_auto_pars, replace=True):
-                content = all_message[0]['content']
+            if search_and_replace(content=mess_text_for_auto_pars):
+                content = search_and_replace(content=all_message[0]['content'], replace=True)
             else:
                 content = all_message[0]['content']
             sent_message = await message.bot.send_message(user[0], text=content)
