@@ -20,3 +20,5 @@ bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 logging.basicConfig(level=logging.INFO)
+
+uniq_text_auto_pars = "uniq_text"
