@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 
@@ -96,7 +97,7 @@ async def upload_to_wall_vk(media_id: str, msg: dict):
             try:
                 response_json = response.json()
             except Exception as e:
-                print("Ошибка при разборе JSON:", e)
+                logging.error("Ошибка при разборе JSON:", e)
                 return None
 
         # 3. Сохранение изображения в альбом группы

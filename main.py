@@ -1,10 +1,10 @@
 import asyncio
+import logging
 
 from database.db import start_db
 from bot.middleware.authorization import AuthorizationMiddleware
 from bot.config import bot, dp
 
-from bot.logger import logger
 from bot.handlers.start_handler import router as start_router
 from bot.handlers.base_post_work_handler import router as base_post_work_router
 from bot.handlers.send_post_handler import router as send_post_router
@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '')))
 
 async def main() -> None:
     await start_db()
-    logger.info("[Запуск бота] Бот запущен ассинхронно!")
+    logging.info("[Запуск бота] Бот запущен ассинхронно!")
     dp.include_routers(
         start_router,
         base_post_work_router,

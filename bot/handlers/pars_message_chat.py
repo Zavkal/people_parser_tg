@@ -1,5 +1,7 @@
 from aiogram import F, Router, types
 
+import logging
+
 from bot.handlers.start_handler import start_bot_edit_post
 from bot.middleware.album_middleware import AlbumMiddleware
 from bot.middleware.message_type import message_media_type
@@ -13,7 +15,7 @@ try:
     CHAT_ID = int(data_middleware[0]) if data_middleware else None
 except Exception as e:
     CHAT_ID = None
-    print(f"Ошибка при загрузке чата: {e}")
+    logging.error(f"Ошибка при загрузке чата: {e}")
 
 
 if CHAT_ID:

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from collections import deque
 from collections.abc import Coroutine
@@ -6,7 +7,6 @@ from collections.abc import Coroutine
 from aiogram.utils.markdown import hlink
 from pyrogram import Client
 
-from bot.logger import logger
 from database.clients import clients
 from database.db import get_sources, get_parser_info, delete_parser_info, select_chat, get_all_parser_info, \
     add_post_info, get_mess_id
@@ -89,7 +89,7 @@ async def parser():
 
                             add_post_info(mess_id=mess.id, source_id=source_id)
                         except Exception as ex:
-                            logger.error(f"Ошибка в парсере: {ex}")
+                            logging.error(f"Ошибка в парсере: {ex}")
 
                 await asyncio.sleep(10)
 

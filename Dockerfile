@@ -2,10 +2,10 @@
 FROM python:3.11-slim
 
 # Устанавливаем рабочую директорию внутри контейнера
-WORKDIR /people_app
+WORKDIR /app
 
 # Копируем только requirements.txt (для установки зависимостей)
-COPY requirements.txt /people_app/
+COPY requirements.txt /app/
 
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt

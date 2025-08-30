@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: people_parser_tg_bot
+    container_name: parser_posts_tg_bot
     env_file:
       - .env
     volumes:

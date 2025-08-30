@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from aiogram import Router, F, types, flags
@@ -65,7 +66,7 @@ async def set_data(message: types.Message, state: FSMContext):
             await message.delete()
             await bot_mess.delete()
     except Exception as ex:
-        print(ex)
+        logging.error(ex)
         bot_message = await message.answer(text="Данные не верные",
                                            reply_markup=start_admin_panel_kb(message.from_user.id))
         await state.clear()
@@ -127,7 +128,7 @@ async def set_phone_code(message: types.Message, state: FSMContext):
             await message.delete()
             await bot_mess.delete()
     except Exception as ex:
-        print(ex)
+        logging.error(ex)
         bot_mess = await message.answer(text="Данные не верные",
                                         reply_markup=start_admin_panel_kb(message.from_user.id))
         await client.disconnect()
