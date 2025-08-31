@@ -54,7 +54,7 @@ def get_source_status(title):
 
 
 async def parser():
-    processed_messages = deque(maxlen=40)
+    processed_messages = deque(maxlen=80)
     client: Client = clients.get("client")
     chat_id, username = select_chat()
     while True:
