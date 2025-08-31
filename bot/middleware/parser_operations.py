@@ -54,7 +54,7 @@ def get_source_status(title):
 
 
 async def parser():
-    processed_messages = deque(maxlen=80)
+    processed_messages = deque(maxlen=20)
     client: Client = clients.get("client")
     chat_id, username = select_chat()
     while True:
@@ -65,21 +65,21 @@ async def parser():
         else:
             for source_id in ids:
                 source_id = source_id[0]
-                last_post = client.get_chat_history(source_id, limit=10)
+                last_post = client.get_chat_history(source_id, limit=1)
                 async for mess in last_post:
                     if not get_mess_id(mess_id=mess.id, source_id=source_id):
                         try:
                             if mess.media_group_id:
                                 if mess.media_group_id in processed_messages:
                                     continue
-                                processed_messages.append(mess.id)
                                 processed_messages.append(mess.media_group_id)
-                                group_ids = [m.id for m in mess if m.media_group_id == mess.media_group_id]
+                                media_group_message = await mess.get_media_group()
+                                media_group_message_ids = [m.id for m in media_group_message]
                                 try:
                                     await client.forward_messages(
                                         chat_id=username,
                                         from_chat_id=source_id,
-                                        message_ids=group_ids,
+                                        message_ids=media_group_message_ids,
                                     )
                                 except Exception:
                                     await client.copy_media_group(
