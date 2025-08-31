@@ -21,4 +21,4 @@ dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 logging.basicConfig(level=logging.INFO)
 
-uniq_text_auto_pars = "uniq_text"
+uniq_text_auto_pars = "#xboxrentavtopost"
