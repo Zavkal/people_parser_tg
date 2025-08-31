@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from aiogram import Router, F, types, flags
@@ -12,7 +13,7 @@ from database.clients import clients
 from database.db import select_user, add_user, get_sources, update_user, select_user_with_param, get_all_parser_info, \
     delete_all_users_bot
 from bot.keyboards.admin_kb import back_settings_user, start_admin_panel_kb, settings_user_already
-from bot.middleware.parser_operations import stop_parsers, delete_session
+from bot.middleware.parser_operations import stop_parsers, delete_session, parser, TaskManager
 
 router = Router(name="Юзербот")
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -34,8 +35,8 @@ async def set_userdata(callback_query: types.CallbackQuery, state: FSMContext):
                 f"api_id,api_hash,номер_телефона",
         parse_mode="html",
         reply_markup=back_settings_user())
-    await state.set_state(AddUserData.add)
     await state.update_data({"call_id": callback_query.message.message_id})
+    await state.set_state(AddUserData.add)
 
 
 @router.message(AddUserData.add, F.text)
@@ -65,7 +66,7 @@ async def set_data(message: types.Message, state: FSMContext):
             await message.delete()
             await bot_mess.delete()
     except Exception as ex:
-        print(ex)
+        logging.error(ex)
         bot_message = await message.answer(text="Данные не верные",
                                            reply_markup=start_admin_panel_kb(message.from_user.id))
         await state.clear()
@@ -99,7 +100,6 @@ async def set_phone_code(message: types.Message, state: FSMContext):
     phone_code = message.text
     data = await state.get_data()
     client, send_code, phone = data.get("client"), data.get("code"), data.get("phone_number")
-
     try:
         user = await client.sign_in(phone, send_code.phone_code_hash, phone_code)
         if user:
@@ -116,7 +116,6 @@ async def set_phone_code(message: types.Message, state: FSMContext):
                 add_user(data.get("api_id"), data.get("api_hash"), phone)
                 bot_mess = await message.answer(text="Данные сохранены",
                                                 reply_markup=start_admin_panel_kb(message.from_user.id))
-
             await message.bot.edit_message_caption(chat_id=message.chat.id,
                                                    message_id=data.get("call_id"),
                                                    caption=f"Телефон: {phone}\n"
@@ -124,12 +123,12 @@ async def set_phone_code(message: types.Message, state: FSMContext):
                                                            f"API_HASH: {data.get('api_hash')}\n",
                                                    reply_markup=settings_user_already())
 
-            clients.update({"client": client})
+            clients["client"] = client
             await asyncio.sleep(2)
             await message.delete()
             await bot_mess.delete()
     except Exception as ex:
-        print(ex)
+        logging.error(ex)
         bot_mess = await message.answer(text="Данные не верные",
                                         reply_markup=start_admin_panel_kb(message.from_user.id))
         await client.disconnect()
@@ -146,26 +145,11 @@ async def set_phone_code_valid(callback_query: types.CallbackQuery):
     await callback_query.answer(text="Я ожидаю код")
 
 
-# @router.callback_query(F.text == "userbot_data")
-# @flags.authorization(all_rights=True)
-# async def setting_user(callback_query: types.CallbackQuery):
-#     data = select_user()
-#     if not data:
-#         await callback_query.answer_photo(caption="Данные отсутствуют", reply_markup=settings_user(), photo=PHOTO_USER)
-#     else:
-#         await callback_query.answer_photo(caption=f"Телефон: {data[2]}\n"
-#                                                   f"API_ID: {data[0]}\n"
-#                                                   f"API_HASH: {data[1]}\n",
-#                                           reply_markup=settings_user_already(),
-#                                           photo=PHOTO_USER)
-
-
 @router.callback_query(F.data == "restart_client")
 @flags.authorization(all_rights=True)
 async def restart_client_user(callback_query: types.CallbackQuery):
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     session_dir = os.path.join(BASE_DIR, "sessions")
-
     # Убедимся, что папка для сессий существует
     if not os.path.exists(session_dir):
         os.makedirs(session_dir)
@@ -204,7 +188,6 @@ async def restart_client_user(callback_query: types.CallbackQuery):
                     delete_all_users_bot()
                     await callback_query.answer(text="Данные юзербота и файлы удалены.")
                     return
-
             await callback_query.answer(text="Клиент перезапущен")
         else:
             await callback_query.answer(text="Остановите все парсеры источников")
@@ -238,3 +221,16 @@ async def send_userbot_settings(callback_query: CallbackQuery):
                                                           f"API_ID: {data[0]}\n"
                                                           f"API_HASH: {data[1]}\n",
                                                   reply_markup=settings_user_already())
+
+
+
+@router.callback_query(F.data == "soft_start")
+async def soft_start(callback_query: CallbackQuery):
+    TaskManager.start()
+    await callback_query.answer('Парсер запущен!')
+
+
+@router.callback_query(F.data == "soft_stop")
+async def soft_stop(callback_query: CallbackQuery):
+    TaskManager.stop()
+    await callback_query.answer('Парсер остановлен!')

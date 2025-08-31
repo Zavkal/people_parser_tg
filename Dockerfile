@@ -1,11 +1,10 @@
 # Используем официальный Python образ версии 3.11
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Устанавливаем рабочую директорию внутри контейнера
-WORKDIR /people_app
+WORKDIR /app
 
-# Копируем только requirements.txt (для установки зависимостей)
-COPY requirements.txt /people_app/
+COPY . /app/
 
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt

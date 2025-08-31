@@ -506,7 +506,7 @@ def get_all_parser_info():
 
 
 def delete_parser_info(channel):
-    cur.execute("DELETE FROM parser_info WHERE channel = '{}'".format(channel))
+    cur.execute("DELETE FROM parser_info WHERE channel = channel")
     db.commit()
 
 
