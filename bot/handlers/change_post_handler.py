@@ -587,6 +587,7 @@ async def handle_text_input(message: types.Message, state: FSMContext) -> None:
 # Удаление нижней строки кода
 @router.callback_query(F.data.startswith("change_text_lower_row:"))
 async def change_text_lower_row_handler(callback: types.CallbackQuery) -> None:
+    await callback.answer()
     media_id = callback.data.split(":")[1]
     all_message = get_post_media_by_media_id(media_id)
     new_message = all_message[0]['content'].split('\n')

@@ -34,6 +34,7 @@ if CHAT_ID:
                 if samples:
                     for sample in samples:
                         sample = sample[1]
+                        print(content)
                         if sample in content:
                             content = content.replace(sample, '')
                 content = content.replace('  ', ' ').strip()
@@ -47,6 +48,7 @@ if CHAT_ID:
 
             processed_messages.add(message.message_id)
             content = message.html_text or ""
+            print(content)
             if samples:
                 for sample in samples:
                     sample = sample[1]

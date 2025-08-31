@@ -52,9 +52,10 @@ def get_source_status(title):
 
 
 async def parser():
-    processed_media_groups = set()
+    processed_media_groups = set()  # Этот набор сохраняется между итерациями
     client: Client = clients.get("client")
     chat_id, username = select_chat()
+
     while get_all_parser_info():
         ids = get_all_parser_info()
         for source_id in ids:
@@ -75,4 +76,4 @@ async def parser():
                     except Exception as ex:
                         logger.error(f"Ошибка в парсере: {ex}")
 
-            await asyncio.sleep(10)
+        await asyncio.sleep(10)

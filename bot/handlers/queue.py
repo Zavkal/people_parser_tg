@@ -6,7 +6,7 @@ from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButto
 import datetime
 
 from bot.middleware.check_media import check_media_post
-from database.db import get_all_post_message, get_button_states
+from database.db import get_all_post_message, get_button_states, select_chat
 
 router = Router(name="Получение очереди")
 
@@ -166,3 +166,12 @@ def close_post(media_id: str, mg_del: int):
         ]
     )
     return close_post_
+
+
+@router.message(F.text == "📝 Новый пост")
+@flags.authorization(post_rights=True)
+async def queue_middleware_vk(message: types.Message, ) -> None:
+    await message.delete()
+    chat_username = select_chat()[1]
+    await message.bot.send_message(chat_id=message.chat.id,
+                                   text=f"@{chat_username}")

@@ -29,8 +29,14 @@ def settings_description_kb(media_id: str):
     flag = get_post_media_by_media_id(media_id)[0]['flag']
     settings_description_kb_ = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="⚙️ Настроить", callback_data=f"settings_description:{media_id}"),
-             InlineKeyboardButton(text="⏪ Назад", callback_data=f"start_working:{media_id}")]
+            [
+                InlineKeyboardButton(text="⚙️ Настроить", callback_data=f"settings_description:{media_id}"),
+                InlineKeyboardButton(text="⛔️ Удалить низ/стр", callback_data=f"change_text_lower_row:{media_id}")
+            ],
+            [
+                InlineKeyboardButton(text="⏪ Назад",
+                                     callback_data=f"start_working:{media_id}")
+            ]
         ]
     )
     if flag > 0:

@@ -21,6 +21,7 @@ def is_admin(user_id):
 
 def start_admin_panel_kb(user_id: int):
     admin_panel_kb_ = [
+        [KeyboardButton(text="📝 Новый пост")],
         [KeyboardButton(text="▶️ Очередь ВК"), KeyboardButton(text="💎 Очередь в ТГ")],
         [KeyboardButton(text="⛔ Настройка шаблонов удаления")]
     ]
