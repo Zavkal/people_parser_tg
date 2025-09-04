@@ -15,9 +15,9 @@ msk_tz = ZoneInfo("Europe/Moscow")
 async def send_to_vk_handler(callback: types.CallbackQuery) -> None:
     media_id = callback.data.split(':')[1]
 
-    await callback.message.edit_reply_markup(reply_markup=send_post_base_kb(media_id))
-
     update_button_states(media_id=media_id, button_vk_state='on')
+
+    await callback.message.edit_reply_markup(reply_markup=send_post_base_kb(media_id))
 
     try:
         await post_to_wall_vk(
