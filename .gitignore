@@ -131,4 +131,6 @@ dmypy.json
 # IDEA
 .idea/
 
-db_bot.db
+# SQLite (данные бота и VK-токены — только на сервере)
+database/db_bot.db
+database/db_bot.db-journal
