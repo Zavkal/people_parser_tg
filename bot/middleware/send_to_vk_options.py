@@ -5,7 +5,6 @@ import os
 import re
 
 import requests
-import vk_api
 import imageio
 
 from aiogram import types
@@ -18,14 +17,11 @@ from telethon.sessions import StringSession
 from bot.config import ADMIN
 from bot.handlers.queue import msk_tz
 from bot.keyboards.send_post_keyboard import send_post_vk_error_kb
+from bot.service.vk_token_manager import vk_token_manager
 from database.db import add_media_post_vk, get_all_post_media_vk, select_groups_vk, get_post_media_by_media_id, get_all_publ_time
 from dotenv import load_dotenv
 
 load_dotenv()
-
-vk_token = os.getenv("VK_USER_TOKEN")
-vk_session = vk_api.VkApi(token=vk_token)
-vk = vk_session.get_api()
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
@@ -110,6 +106,8 @@ async def upload_to_wall_vk(
         media_id: str,
         msg: dict,
 ) -> None:
+    await vk_token_manager.ensure_access_token_async()
+    vk = vk_token_manager.get_api()
 
     if msg['media_type']:
         media_dir = os.path.join(base_dir, 'img', msg['media_type'])
@@ -196,6 +194,7 @@ async def post_to_wall_vk(
         media_id: str,
         call_or_msg: types.CallbackQuery | types.Message,
 ) -> None:
+    await vk_token_manager.ensure_access_token_async()
 
     formatted_text = await aggregate_post_and_download_media(
         media_id=media_id,
@@ -219,6 +218,7 @@ async def post_to_wall_vk(
     for media_vk_id in media:
         attachments += "," + media_vk_id['media']
 
+    vk = vk_token_manager.get_api()
     groups = select_groups_vk()
     for group in groups:
         vk.wall.post(

@@ -34,6 +34,7 @@ async def send_to_vk_handler(callback: types.CallbackQuery) -> None:
                                           message_id=mess_del.message_id)
         update_button_states(media_id=media_id, button_vk_state='off')
         await callback.message.edit_reply_markup(reply_markup=send_post_base_kb(media_id))
+        return
 
     mess_del = await callback.bot.send_message(
         text="⚠️ Все данные успешно скачаны и загружены на сервер вконтакте для публикации.",

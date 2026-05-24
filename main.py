@@ -4,6 +4,7 @@ import logging
 from database.db import start_db
 from bot.middleware.authorization import AuthorizationMiddleware
 from bot.config import bot, dp
+from bot.service.vk_token_manager import vk_token_manager
 
 from bot.handlers.start_handler import router as start_router
 from bot.handlers.base_post_work_handler import router as base_post_work_router
@@ -25,6 +26,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '')))
 
 async def main() -> None:
     await start_db()
+    await vk_token_manager.startup()
+    vk_token_manager.start_background_task()
     logging.info("[Запуск бота] Бот запущен ассинхронно!")
     dp.include_routers(
         start_router,

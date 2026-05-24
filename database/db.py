@@ -92,7 +92,34 @@ async def start_db():
                 "group_id TEXT,"
                 "flag BOOL DEFAULT True)")
 
+    create_vk_id_tables()
     db.commit()
+
+
+def create_vk_id_tables():
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS vk_id_oauth_session("
+        "id INTEGER PRIMARY KEY CHECK (id = 1),"
+        "code_verifier TEXT NOT NULL,"
+        "state TEXT NOT NULL,"
+        "client_id TEXT NOT NULL,"
+        "redirect_uri TEXT NOT NULL,"
+        "scope TEXT NOT NULL,"
+        "created_at TEXT NOT NULL)"
+    )
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS vk_id_tokens("
+        "client_id TEXT PRIMARY KEY,"
+        "access_token TEXT NOT NULL,"
+        "refresh_token TEXT,"
+        "expires_in INTEGER,"
+        "user_id INTEGER,"
+        "scope TEXT,"
+        "device_id TEXT,"
+        "token_type TEXT,"
+        "id_token TEXT,"
+        "updated_at TEXT NOT NULL)"
+    )
 
 
 def add_post_media(
@@ -615,3 +642,92 @@ def delete_group_vk(group_id: str):
         "DELETE FROM groups_vk WHERE group_id = ?", (group_id,)
     )
     db.commit()
+
+
+def save_vk_id_oauth_session(
+    code_verifier: str,
+    state: str,
+    client_id: str,
+    redirect_uri: str,
+    scope: str,
+):
+    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        "INSERT OR REPLACE INTO vk_id_oauth_session "
+        "(id, code_verifier, state, client_id, redirect_uri, scope, created_at) "
+        "VALUES (1, ?, ?, ?, ?, ?, ?)",
+        (code_verifier, state, client_id, redirect_uri, scope, created_at),
+    )
+    db.commit()
+
+
+def get_vk_id_oauth_session():
+    row = cur.execute(
+        "SELECT code_verifier, state, client_id, redirect_uri, scope "
+        "FROM vk_id_oauth_session WHERE id = 1"
+    ).fetchone()
+    if not row:
+        return None
+    return {
+        "code_verifier": row[0],
+        "state": row[1],
+        "client_id": row[2],
+        "redirect_uri": row[3],
+        "scope": row[4],
+    }
+
+
+def save_vk_id_tokens(
+    client_id: str,
+    access_token: str,
+    refresh_token: str = None,
+    expires_in: int = None,
+    user_id: int = None,
+    scope: str = None,
+    device_id: str = None,
+    token_type: str = None,
+    id_token: str = None,
+):
+    updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        "INSERT OR REPLACE INTO vk_id_tokens "
+        "(client_id, access_token, refresh_token, expires_in, user_id, scope, "
+        "device_id, token_type, id_token, updated_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            client_id,
+            access_token,
+            refresh_token,
+            expires_in,
+            user_id,
+            scope,
+            device_id,
+            token_type,
+            id_token,
+            updated_at,
+        ),
+    )
+    db.commit()
+
+
+def get_vk_id_tokens(client_id: str):
+    row = cur.execute(
+        "SELECT access_token, refresh_token, expires_in, user_id, scope, "
+        "device_id, token_type, id_token, updated_at "
+        "FROM vk_id_tokens WHERE client_id = ?",
+        (client_id,),
+    ).fetchone()
+    if not row:
+        return None
+    return {
+        "client_id": client_id,
+        "access_token": row[0],
+        "refresh_token": row[1],
+        "expires_in": row[2],
+        "user_id": row[3],
+        "scope": row[4],
+        "device_id": row[5],
+        "token_type": row[6],
+        "id_token": row[7],
+        "updated_at": row[8],
+    }
